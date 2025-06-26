@@ -1,0 +1,168 @@
+# This is an example of the CIA configuration file with descriptions.
+#
+# Environment variables are required for CGC initializing, make sure it's configured in startup scripts.
+# Spring:
+#           Database:
+#                CIA: Oracle Db is the default choice for CIA.
+#                     Make sure hibernate database schema process(hbm2ddl.auto) is "NOT" create/ drop otherwise, data would be eliminated.
+#                CGC: Embedded H2 Db is the default choice for CGC, Be careful with the jpa dialect if db changes.
+# Coriander-Ingress-API:
+#           Setting: Regular setup for CIA/CGC starts.
+#           Host: Define CIA host, for CGC to reach the central CIA.
+#           Client: Define CGC scope, sites and Fabs are describable, make sure it's the same setup in CIA.
+# API Gateway:
+#           Describe which API Gateway is associable and what's the scope for gateway coriander.
+#           By default, each CGC is configured with a corresponding API Gateway on a one-to-one basis,
+#              but we also support a one-to-many configuration.
+#           It is necessary for CGC to coriander gateway(s) by configuring gateway settings.
+#
+#
+# Notes: Please don't use tabs in this file.
+
+#  Environment variable in main application.yml:
+#       1. CIA_APP_CONFIG: Decides which additional application config should be activated.
+#
+#
+
+
+# server setup for exposing port
+server:
+  port: ${PROJECT_EXPOSE_PORT:80}
+
+# Main settings for CIA/CGC
+coriander-ingress-api:
+  setting:
+    scheme: ${CIA_SCHEME:http}                                 # Communication scheme
+    deploy-type: host                                          # Deploy Type {host, client}
+    log-address: ${CIA_LOG_PATH:./log/}                        # Log address
+    datasource-type: oracle                                    # Indicates DB type
+
+    identify-header: CIA-Identify                              # Request Head Identifier for inner communications
+    identify: ${CIA_IDENTIFIER_VALUE:central-cia}              # Identifier value
+
+    initial: # Initial Settings
+      initial: ${CIA_ENABLE_INIT:true}                         #     Set enable initial
+
+    default-proxy: # Default Proxy setup for inner communications
+      enable-default: ${CIA_ENABLE_DEFAULT_PROXY:false}        #     Set enable default proxy, if it's not active, CGC may not complete the initializing
+      proxy-host: ${CIA_DEFAULT_PROXY_HOST:none}
+      proxy-port: ${CIA_DEFAULT_PROXY_PORT:8080}
+
+    default-info:
+      gateway-https: ${CIA_DEFAULT_SETTING_GATEWAY_HTTPS:false}                   # Default CGC-Gateway Scheme, CIA 4.1.0
+      normal-gateway-port: ${CIA_DEFAULT_SETTING_NORMAL_GATEWAY_PORT:8651}        # Default CGC-Normal-Gateway Port, patch CIA 4.2.0
+      sandbox-gateway-port: ${CIA_DEFAULT_SETTING_SANDBOX_GATEWAY_PORT:8080}      # Default CGC-Sandbox-Gateway Port, CIA 4.2.0
+      grafana-https: ${CIA_DEFAULT_SETTING_GRAFANA_HTTPS:false}                   # Default Grafana Scheme, CIA 4.1.0
+      grafana-port: ${CIA_DEFAULT_SETTING_GRAFANA_PORT:8655}                      # Default Grafana Port, CIA 4.1.0
+      grafana-path: >                                                             # Grafana Path Map, CIA 4.1.0
+        {
+          apisixDashboard: '/d/bLlNuRLWz/apache-apisix'
+        }
+
+    api: # API settings for inner communications
+      control-header: "CIA-Apikey"                             #     Request Head Identifier for inner API communications
+      admin-key: #     Admin keys for management API usages
+        - ${CIA_DEFAULT_ADMIN_KEY:admin-key-CIA}
+      viewer-key: #     Viewer keys for retrieve inner data API usages
+        - ${CIA_DEFAULT_VIEWER_KEY:viewer-key-CIA}
+
+  host: # Central CIA Attributes
+    display-name: CIA                                          # CIA, case-insensitive
+    cron-job: >                                                # Records What Cron-Job should be activated CIA:4.1.0, listing by comma
+      GatewayInfoCronJob
+    clc: # CIALogCenter Setting. CIA 4.1.0
+      enable-clc: ${CIA_CLC_ENABLE:true}                            # Enable CIALogCenter. CIA 4.1.0
+      enable-proxy: ${CIA_CLC_USE_PROXY:false}                       # Enable proxy to reach CIALogCenter. CIA 4.1.0
+      https: ${CIA_CLC_USE_HTTPS:false}                              # Enable https to reach CIALogCenter. CIA 4.1.0
+      host: ${CIA_CLC_HOST:localhost}                                # Host or ip Of CIALogCenter. CIA 4.1.0
+      port: ${CIA_CLC_PORT:12377}                                    # Port of CIALogCenter. CIA 4.1.0
+      batch-size: ${CIA_CLC_MESSAGE_BATCH:10}                        # CIALogCenter Message process in batch size. CIA 4.1.0
+      flush-interval-ms: ${CIA_CLC_MESSAGE_FLUSH_INTERVAL_MS:300000} # CIALogCenter Message process time interval. CIA 4.1.0
+
+  client: # CGC Scope setup
+    display-name: cgc                                          # CGC, case-insensitive
+    deploy: # Deploying scope define
+      - site-name: "TAOYUAN"                                   #     Site List
+        fab: #          Fab List
+          - "FAB1"
+          - "FAB2"
+          - "FAB3"
+        deploy-list:
+          - identify: cgc
+            client-dns: 127.0.0.1                             #      Client DNS, not required when CGC(client) mode
+            client-port: 80                                   #      Client port, not required when CGC(client) mode
+            admin-key: #      CGC admin keys for management API usages, not required when CGC(client) mode
+              - "admin-key-<site>"
+
+      - site-name: "VIRTUAL"                                  #      CIA 4.2.0 Treat SandBox as a fab
+        fab:
+          - "SANDBOX"
+        deploy-list:
+          - identify: VIRTUAL-CGC-1
+            client-dns: cgc.sandbox
+            client-port: 80
+            admin-key:
+              - "admin-key-VIRTUAL"
+
+signature: # Signature/ Sign-Off SystemEntity Configuration
+  provider: ${CIA_SIGNATURE_PROVIDER:none}                    # Signature Provider
+  scheme: ${CIA_SIGNATURE_SCHEME:https}                       # Use Scheme Type: http/ https
+  server: ${CIA_SIGNATURE_SERVER:none}
+  url-list: # Url Reference by Mapping, Please Provide All Needed Url Pair In Case Of Runtime Error.
+    role-authority: "/some/path"
+
+
+api-gateway: # API gateway scope setup
+  gateway-type: apisix                                         # Gateway type define
+  scheme: http                                                 # Communication scheme with gateway
+
+# Project settings for CIA/CGC
+spring:
+  devtools:
+    restart:
+      log-condition-evaluation-delta: false
+  datasource:
+    url: jdbc:h2:file:./data;DB_CLOSE_ON_EXIT=FALSE;MODE=Oracle;INIT=CREATE SCHEMA IF NOT EXISTS CIA\;SET SCHEMA CIA
+    username: root
+    password: root
+    driver-class-name: org.h2.Driver
+    hikari:
+      pool-name: main-hikari-pool
+      maximum-pool-size: 10
+      register-mbeans: true
+      metric-registry-jmx-name: "com.zaxxer.hikari:type=MainDataSource"
+  jpa:
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        default_schema: CIA
+        format_sql: false
+        hbm2ddl.auto: create
+        generate_statistics: false
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /cia-db
+      settings:
+        web-allow-others: true
+  jmx:
+    default-domain: main.application
+  http:
+    encoding:
+      force: true
+logging:
+  level:
+    org:
+      springframework: INFO
+      hibernate:
+        SQL: INFO
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+
+
+
+

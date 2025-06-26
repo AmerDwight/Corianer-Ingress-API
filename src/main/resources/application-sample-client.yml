@@ -1,0 +1,158 @@
+# This is an example of the CGC configuration file with descriptions.
+#
+# Environment variables are required for CGC initializing, make sure it's configured in startup scripts.
+# Spring:
+#           Database:
+#                CIA: Oracle Db is the default choice for CIA.
+#                     Make sure hibernate database schema process(hbm2ddl.auto) is "NOT" create/ drop otherwise, data would be eliminated.
+#                CGC: Embedded H2 Db is the default choice for CGC, Be careful with the jpa dialect if db changes.
+# Coriander-Ingress-API:
+#           Setting: Regular setup for CIA/CGC starts.
+#           Host: Define CIA host, for CGC to reach the central CIA.
+#           Client: Define CGC scope, sites and Fabs are describable, make sure it's the same setup in CIA.
+# API Gateway:
+#           Describe which API Gateway is associable and what's the scope for gateway coriander.
+#           By default, each CGC is configured with a corresponding API Gateway on a one-to-one basis,
+#              but we also support a one-to-many configuration.
+#           It is necessary for CGC to coriander gateway(s) by configuring gateway settings.
+#
+#
+# Notes: Please don't use tabs in this file.
+
+#  Environment variable in main application.yml:
+#       1. CIA_APP_CONFIG: Decides which additional application config should be activated.
+#
+#
+
+
+# server setup for exposing port
+server:
+  port: ${PROJECT_EXPOSE_PORT:80}
+
+# Main settings for CIA
+coriander-ingress-api:
+  setting:
+    scheme: ${CIA_SCHEME:http}                                 # Communication scheme
+    deploy-type: client                                        # Deploy Type {host, client}
+    log-address: ${CIA_LOG_PATH:./log/ }                       # Log address
+    datasource-type: h2                                        # Indicates DB type
+
+    identify-header: CIA-Identify                              # Request Head Identifier for inner communications
+    identify: ${CIA_IDENTIFIER_VALUE:central-CIA }             # Identifier value
+
+    initial:                                                   # Initial Settings
+      initial: ${CIA_ENABLE_INIT:true }                        #     Set enable initial
+
+    default-proxy:                                             # Default Proxy setup for inner communications
+      enable-default: ${CIA_ENABLE_DEFAULT_PROXY:false }       #     Set enable default proxy, if it's not active, CGC may not complete the initializing
+      proxy-host: ${CIA_DEFAULT_PROXY_HOST:none }
+      proxy-port: ${CIA_DEFAULT_PROXY_PORT:8080 }
+
+    module:
+      role-device-management: ${CIA_CORE_MODULE_ROLE_DEVICE:false }  # Enable/ Disable the functional module inside CIA/ CGC
+
+    api:                                                       # API settings for inner communications
+      control-header: "CIA-Apikey"                             #     Request Head Identifier for inner API communications
+      admin-key:                                               #     Admin keys for management API usages
+        - ${CIA_DEFAULT_ADMIN_KEY:admin-key-cgc }
+      viewer-key:                                              #     Viewer keys for retrieve inner data API usages
+        - ${CIA_DEFAULT_VIEWER_KEY:viewer-key-cgc }
+
+  host:                                                        # Central CIA Attributes
+    display-name: cia                                          # CIA, case-insensitive
+    host-dns: ${CIA_HOST_DNS:none }                            #      Host DNS, not required when CIA(host) mode
+    host-port: ${CIA_HOST_PORT:none }                          #      Host port, not required when CIA(host) mode
+    admin-key: ${CIA_HOST_ADMIN_KEY:admin-key-cia }            #      CIA admin keys for management API usages, not required when CIA(host) mode
+
+  client:                                                      # CGC Scope setup
+    display-name: cgc                                          # CGC, case-insensitive
+    deploy:                                                    # Deploying scope define
+      - site-name: "TAOYUAN"                                   #     Site List
+        fab:                                                   #     Fab List
+          - "FAB1"
+          - "FAB2"
+          - "FAB3"
+
+api-gateway:                                                        # API gateway scope setup
+  gateway-type: apisix                                              # Gateway type define
+  scheme: http                                                      # Communication scheme with gateway
+  gw-request-verify: ${CIA_GATEWAY_REQUEST_VERIFY:true}             # Controls if gateway verify user, default true, CIA 4.2.0
+  http-log-collect: ${CIA_GATEWAY_HTTP_LOG_COLLECT:true}            # Controls if post gateway log to http collector, default true, CIA 4.2.0
+  deploy:                                                           # Deploying scope define, not required when CIA(host) mode
+    - site-name: "TAOYUAN"                                          # Site List
+      fab:                                                          # Fab List
+        - "FAB1"
+        - "FAB2"
+        - "FAB3"
+      # Internal Gateway info setup, patched: CIA 4.2.0
+      # Internal: ths perspective inside the docker image, patched: CIA 4.2.0
+      internal-gateway-host: ${CIA_INTERNAL_GATEWAY_HOST:<GatewayInnerHost>}
+      internal-gateway-admin-port: ${CIA_INTERNAL_GATEWAY_ADMIN_PORT:<GatewayInnerAdminPort>}
+      internal-gateway-service-port: ${CIA_INTERNAL_GATEWAY_SERVICE_PORT:<GatewayInnerServicePort>}
+      # External: ths perspective outside containers
+      external-gateway-host: ${CIA_EXTERNAL_GATEWAY_HOST:<GatewayHost>}             # External Gateway host setup
+      external-gateway-service-port: ${CIA_EXTERNAL_GATEWAY_PORT:<GatewayPort>}     # External Gateway port setup
+      external-grafana-host: ${CIA_EXTERNAL_GRAFANA_HOST:<GrafanaHost>}             # External Grafana host setup, CIA 4.1.0
+      external-grafana-port: ${CIA_EXTERNAL_GRAFANA_PORT:<GrafanaPort>}             # External Grafana port setup, CIA 4.1.0
+      admin-key: "a6de2efaf21a4456345e2242d4b8b5cd"                                 # Prod API Gateway command key
+
+      log-server-scheme: ${CIA_GATEWAY_LOG_SERVER_SCHEME:http}                      # Log server for API gateway setup
+      log-server: ${CIA_GATEWAY_LOG_SERVER_HOST:cgc-log-server}                     #
+      log-server-port: ${CIA_GATEWAY_LOG_SERVER_PORT:12375}                         #
+      log-server-path: ${CIA_GATEWAY_LOG_SERVER_PATH:/log/apisix}                   # Log Endpoint of Log Server
+      log-server-auth-key: ${CIA_GATEWAY_LOG_SERVER_KEY:http-log-server-pass-key}   # Log Server Access Key
+
+      gateway-proxy-redirect-host: ${CIA_GATEWAY_PROXY_REDIRECT_HOST:cgc-gateway-proxy-redirector}    # Proxy Redirector for API gateway setup
+      gateway-proxy-redirect-port: ${CIA_GATEWAY_PROXY_REDIRECT_HOST_PORT:12376}                     #
+      gateway-proxy-redirect-header-host: ${GPR_REDIRECT_HOST_HEADER:Redirect-To}               # Header for real destination host
+      gateway-proxy-redirect-header-port: ${GPR_REDIRECT_HOST_PORT_HEADER:Redirect-To-Port}     # Header for real destination host port
+
+# Project settings for CIA/CGC
+spring:
+  devtools:
+    restart:
+      log-condition-evaluation-delta: false
+# Default for CGC
+  datasource:
+    url: jdbc:h2:mem:CGC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE;MODE=MySQL;INIT=CREATE SCHEMA IF NOT EXISTS CGC\;SET SCHEMA CGC
+    username: root
+    password: root
+    driver-class-name: org.h2.Driver
+    hikari:
+      pool-name: main-hikari-pool
+      maximum-pool-size: 10
+      register-mbeans: true
+      metric-registry-jmx-name: "com.zaxxer.hikari:type=MainDataSource"
+  jmx:
+    default-domain: main.application
+  http:
+    encoding:
+      force: true
+  h2:
+    console:
+      enabled: true
+      path: /cgc-db
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        default_schema: CGC
+        format_sql: true
+        hbm2ddl.auto: create
+        generate_statistics: false
+        dialect: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    org:
+      springframework: INFO
+      hibernate:
+        SQL: INFO
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+
+
+
+

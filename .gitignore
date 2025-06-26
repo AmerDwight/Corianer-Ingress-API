@@ -1,0 +1,28 @@
+# IDE相關文件
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# 構建輸出目錄
+bin/
+target/
+
+# 生成的代碼和臨時文件
+*/src/main/java/generated/**
+.apt_generated/
+*/src/main/temp/
+
+# 日誌和幫助文件
+log/
+log/*
+help/
+help/*
+
+# 數據庫文件
+data.mv.db
+
+# 應用相關
+*/src/main/webapp/META-INF/
+*/MethodCounter.txt

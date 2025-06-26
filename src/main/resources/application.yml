@@ -1,0 +1,30 @@
+spring:
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-empty-json-arrays: false
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  profiles:
+    active: ${CIA_APP_CONFIG:sample-host}
+  http:
+    encoding:
+      force: true
+  main:
+    allow-bean-definition-overriding: true
+
+application-core:
+  info:
+    groupId: @project.groupId@
+    artifactId: @project.artifactId@
+    version: @project.version@
+    name: @project.name@
+    description: @project.description@
+
+server:
+  port: 80
+  shutdown: graceful
+
+request:
+  settings:
+    timeout-ms: 60000

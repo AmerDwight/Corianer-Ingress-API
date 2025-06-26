@@ -1,0 +1,32 @@
+<configuration>
+    <!-- 定義共用的layout class -->
+    <property name="COMMON_PATTERN" value="%d{YYYY-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{1.}: %msg%n%throwable"/>
+    <property name="LOG_PATH" value="${MSM_LOG_PATH:-./log}"/>
+
+    <!-- 定義以Console顯示日誌 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="tw.amer.cia.core.component.structural.logPattern.CiaGeneralLayout">
+            <Pattern>
+                %white(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) %white([%t]) %cyan(%c{1.}): %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
+
+    <!-- 定義以檔案保留日誌 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_PATH}/MicroserviceManagement/stdout.log</File>
+        <layout class="tw.amer.cia.core.component.structural.logPattern.CiaGeneralLayout">
+            <pattern>${COMMON_PATTERN}</pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/MicroserviceManagement/stdout.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 設定要被日誌紀錄下的等級 -->
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

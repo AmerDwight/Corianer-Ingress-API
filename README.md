@@ -15,20 +15,20 @@ Coriander Ingress API supports two deployment modes:
 ### CIA (Coriander Ingress API - Host Mode)
 - **Central Control Node**: Acts as the master controller managing all API data and permissions
 - **Database**: Uses Oracle DB by default for persistent storage
-- **Responsibilities**: 
-  - API resource management
-  - Permission and authorization control
-  - Configuration distribution to CGC nodes
-  - Central monitoring and analytics
+- **Responsibilities**:
+    - API resource management
+    - Permission and authorization control
+    - Configuration distribution to CGC nodes
+    - Central monitoring and analytics
 
 ### CGC (Coriander Gateway Control - Client Mode)
 - **Gateway Control Node**: Works with API Gateway (default: Apache APISIX) in containerized Pod deployment
 - **Database**: Uses embedded H2 database for local caching
 - **Responsibilities**:
-  - Runtime API usage monitoring
-  - Local gateway configuration management
-  - Real-time API traffic control
-  - Data synchronization with CIA
+    - Runtime API usage monitoring
+    - Local gateway configuration management
+    - Real-time API traffic control
+    - Data synchronization with CIA
 
 ## Key Features
 
@@ -82,7 +82,7 @@ export PROJECT_EXPOSE_PORT=80
 ```
 
 2. **Database Setup**
-Configure Oracle database connection in your environment or use H2 for testing.
+   Configure Oracle database connection in your environment or use H2 for testing.
 
 3. **Start CIA**
 ```bash
