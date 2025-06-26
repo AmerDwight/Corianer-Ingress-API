@@ -1,6 +1,7 @@
 # Coriander Ingress API
 
 A comprehensive API control system that provides unified permission management and gateway orchestration for organizational information systems integration.
+Created by a Taiwanese bastard who favors coriander a lot.
 
 ## Overview
 
